@@ -50,50 +50,53 @@ const PolaroidCarousel = forwardRef(({
 
         <div className="relative flex-1 p-[clamp(0.75rem,1.5vw,2rem)]">
           <div className="relative w-full h-full bg-black overflow-hidden">
-            <Swiper
-              ref={swiperRef}
-              effect="fade"
-              autoplay={{
-                delay: slideInterval,
-                disableOnInteraction: false,
-                pauseOnMouseEnter: false,
-              }}
-              modules={[Autoplay, EffectFade]}
-              onSlideChange={onSlideChange}
-              className="w-full h-full"
-              loop={true}
-              allowTouchMove={false}
-              speed={1000}
-              fadeEffect={{
-                crossFade: true,
-              }}
-              watchSlidesProgress={true}
-              loopAdditionalSlides={2}
-              updateOnWindowResize={true}
-              observer={true}
-              observeParents={true}
-              lazyPreloadPrevNext={2}
-              key={photos.length} // Esto ayuda a mantener el estado del autoplay
-            >
-              {photos.map((photo) => (
-                <SwiperSlide key={photo.id} className="w-full h-full">
-                  <div className="relative w-full h-full bg-black">
-                    <div className="absolute inset-0">
-                      <Image
-                        src={photo.url || photo.image_url}
-                        alt={photo.comment || "Selfie del evento"}
-                        fill
-                        priority
-                        className="object-cover"
-                        sizes="(max-width: 76px) 90vw, 
-                       (max-width: 1280px) 45vw,
-                       55vw"
-                      />
-                    </div>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+          <Swiper
+        ref={swiperRef}
+        effect="fade"
+        autoplay={{
+          delay: slideInterval,
+          disableOnInteraction: false,
+          pauseOnMouseEnter: false,
+        }}
+        modules={[Autoplay, EffectFade]}
+        onSlideChange={onSlideChange}
+        className="w-full h-full"
+        loop={true}
+        allowTouchMove={false}
+        speed={1000}
+        fadeEffect={{
+          crossFade: true,
+        }}
+        observer={true}
+        observeParents={true}
+        watchSlidesProgress={true}
+        updateOnImagesReady={true}
+        loopAdditionalSlides={2}
+        preventInteractionOnTransition={true}
+        watchOverflow={true}
+        key={photos.map(p => p.id).join(',')} // Fuerza reinicio cuando cambian las fotos
+      >
+        {photos.map((photo) => (
+          <SwiperSlide 
+            key={photo.id} 
+            className="w-full h-full"
+            virtualIndex={photo.id}
+          >
+            <div className="relative w-full h-full bg-black">
+              <div className="absolute inset-0">
+                <Image
+                  src={photo.url || photo.image_url}
+                  alt={photo.comment || "Selfie del evento"}
+                  fill
+                  priority={true}
+                  className="object-cover"
+                  sizes="(max-width: 76px) 90vw, (max-width: 1280px) 45vw, 55vw"
+                />
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
           </div>
         </div>
 
