@@ -1,5 +1,5 @@
 
-```sql
+
 -- Crear tabla uploads
 create table uploads (
   id uuid default uuid_generate_v4() primary key,
@@ -110,10 +110,6 @@ create policy "Allow authenticated user modifications"
 on carousel_settings for all
 using (auth.role() = 'authenticated');
 
-
-
-
-
 -- Crear bucket para fotos
 insert into storage.buckets (id, name, public)
 values ('photos', 'photos', true);
@@ -133,9 +129,6 @@ using (
   bucket_id = 'photos'
   and auth.role() = 'authenticated'
 );
-
-
-## 4. Funciones Útiles
 
 
 -- Función para actualizar updated_at

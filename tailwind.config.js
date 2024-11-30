@@ -1,5 +1,3 @@
-
-
 const config = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -51,6 +49,5 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
 }
 export default config
