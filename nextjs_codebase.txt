@@ -1,0 +1,2436 @@
+Instrucciones para el Análisis del Proyecto Next.js 14:
+
+1. Este es un proyecto Next.js 14 que utiliza el App Router
+2. Aspectos clave a considerar:
+   - Estructura de carpetas app/
+   - Server y Client Components
+   - Archivos especiales (page, layout, loading, error)
+   - API Routes y manejo de datos
+   - Patrones de optimización y renderizado
+3. La aplicación utiliza:
+   - Server Components por defecto
+   - TypeScript
+   - Estructuras de datos y estado
+4. Usa este contexto para responder preguntas sobre la aplicación
+
+
+================================================================================
+ESTRUCTURA DEL PROYECTO NEXT.JS 14
+================================================================================
+
+
+
+================================================================================
+SECCIÓN: COMPONENTS
+================================================================================
+
+
+### Archivo: src\app\components\CameraIcon.jsx ###
+--------------------------------------------------------------------------------
+const CameraIcon = () => (
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="mx-auto text-purple-200/70"
+    >
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+      <circle cx="12" cy="13" r="3" />
+    </svg>
+  );
+  
+  export default CameraIcon;
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\CarouselSettings.jsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client";
+import React, { useState } from 'react';
+import { useCarouselSettings } from '@/app/hooks/useCarouselSettings ';
+import { Slider } from "@/app/components/ui/slider";
+import { Switch } from "@/app/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/ui/select";
+import { FaBolt, FaSmile, FaHandSparkles, FaClock, FaImages, FaSave } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+
+const CarouselSettings = () => {
+  const [isSaving, setIsSaving] = useState(false);
+  const { settings, loading, saveSettings } = useCarouselSettings();
+
+  if (loading || !settings) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+      </div>
+    );
+  }
+
+  const handleSettingChange = (key, value) => {
+    const newSettings = {
+      ...settings,
+      [key]: value
+    };
+    saveSettings(newSettings);
+  };
+
+  const handleSaveAll = async () => {
+    try {
+      setIsSaving(true);
+      await saveSettings(settings);
+      toast.success('Configuración guardada exitosamente');
+    } catch (error) {
+      toast.error('Error al guardar la configuración');
+      console.error('Error saving settings:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4 sm:space-y-8 py-4 sm:py-6">
+      {/* Duración de cada foto */}
+      <div className="space-y-4 sm:space-y-6 bg-gray-800/20 p-4 sm:p-6 rounded-lg border border-gray-700/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <FaClock className="text-purple-400 text-base sm:text-lg" />
+            <span className="text-gray-200 font-medium text-sm sm:text-base">Duración de cada foto</span>
+          </div>
+          <span className="text-purple-400 font-medium bg-purple-400/10 px-2 sm:px-3 py-1 rounded-md text-sm sm:text-base">
+            {settings.slide_interval / 1000}s
+          </span>
+        </div>
+        <div className="pl-6 sm:pl-9">
+          <Slider
+            value={[settings.slide_interval]}
+            onValueChange={([value]) => handleSettingChange('slide_interval', value)}
+            min={2000}
+            max={10000}
+            step={1000}
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      {/* Cantidad de fotos */}
+      <div className="space-y-4 sm:space-y-6 bg-gray-800/20 p-4 sm:p-6 rounded-lg border border-gray-700/30">
+        <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+          <FaImages className="text-purple-400 text-base sm:text-lg" />
+          <span className="text-gray-200 font-medium text-sm sm:text-base">Cantidad de fotos a mostrar</span>
+        </div>
+        <div className="pl-6 sm:pl-9">
+          <Select 
+            value={settings.photos_limit} 
+            onValueChange={(value) => handleSettingChange('photos_limit', value)}
+          >
+            <SelectTrigger className="w-full bg-gray-800/40 border-gray-700/50 text-gray-200 text-sm sm:text-base">
+              <SelectValue placeholder="Selecciona un límite" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectItem value="all" className="text-gray-200 hover:bg-gray-700 text-sm sm:text-base">
+                Todas las fotos
+              </SelectItem>
+              <SelectItem value="10" className="text-gray-200 hover:bg-gray-700 text-sm sm:text-base">
+                Últimas 10 fotos
+              </SelectItem>
+              <SelectItem value="20" className="text-gray-200 hover:bg-gray-700 text-sm sm:text-base">
+                Últimas 20 fotos
+              </SelectItem>
+              <SelectItem value="30" className="text-gray-200 hover:bg-gray-700 text-sm sm:text-base">
+                Últimas 30 fotos
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Efecto Flash */}
+      <div className="space-y-6 bg-gray-800/20 p-6 rounded-lg border border-gray-700/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <FaBolt className="text-purple-400 text-lg" />
+            <span className="text-gray-200 font-medium">Efecto Flash</span>
+          </div>
+          <Switch
+            checked={settings.flash_enabled}
+            onCheckedChange={(checked) => handleSettingChange('flash_enabled', checked)}
+          />
+        </div>
+        {settings.flash_enabled && (
+          <div className="space-y-4 mt-4 pl-9">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Intervalo</span>
+              <span className="text-purple-400 font-medium bg-purple-400/10 px-3 py-1 rounded-md">
+                {settings.flash_interval / 1000}s
+              </span>
+            </div>
+            <Slider
+              value={[settings.flash_interval]}
+              onValueChange={([value]) => handleSettingChange('flash_interval', value)}
+              min={5000}
+              max={30000}
+              step={1000}
+              className="w-full"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Emojis Flotantes */}
+      <div className="space-y-6 bg-gray-800/20 p-6 rounded-lg border border-gray-700/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <FaSmile className="text-purple-400 text-lg" />
+            <span className="text-gray-200 font-medium">Emojis Flotantes</span>
+          </div>
+          <Switch
+            checked={settings.emojis_enabled}
+            onCheckedChange={(checked) => handleSettingChange('emojis_enabled', checked)}
+          />
+        </div>
+        {settings.emojis_enabled && (
+          <div className="space-y-6 mt-4 pl-9">
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-gray-400">Intervalo</span>
+                <span className="text-purple-400 font-medium bg-purple-400/10 px-3 py-1 rounded-md">
+                  {settings.emoji_interval / 1000}s
+                </span>
+              </div>
+              <Slider
+                value={[settings.emoji_interval]}
+                onValueChange={([value]) => handleSettingChange('emoji_interval', value)}
+                min={500}
+                max={5000}
+                step={500}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-3">
+              <label className="block text-gray-400">Emojis a utilizar</label>
+              <input
+                type="text"
+                value={settings.selected_emojis}
+                onChange={(e) => handleSettingChange('selected_emojis', e.target.value)}
+                className="w-full p-3 bg-gray-800/40 rounded-lg border border-gray-700/50 
+                  text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50
+                  focus:border-transparent"
+                placeholder="Separar emojis con comas"
+              />
+              <p className="text-xs text-gray-500">Separa los emojis con comas</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Efecto Confetti */}
+      <div className="space-y-6 bg-gray-800/20 p-6 rounded-lg border border-gray-700/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <FaHandSparkles className="text-purple-400 text-lg" />
+            <span className="text-gray-200 font-medium">Efecto Confetti</span>
+          </div>
+          <Switch
+            checked={settings.confetti_enabled}
+            onCheckedChange={(checked) => handleSettingChange('confetti_enabled', checked)}
+          />
+        </div>
+        {settings.confetti_enabled && (
+          <div className="space-y-4 mt-4 pl-9">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Intervalo</span>
+              <span className="text-purple-400 font-medium bg-purple-400/10 px-3 py-1 rounded-md">
+                {settings.confetti_interval / 1000}s
+              </span>
+            </div>
+            <Slider
+              value={[settings.confetti_interval]}
+              onValueChange={([value]) => handleSettingChange('confetti_interval', value)}
+              min={10000}
+              max={60000}
+              step={5000}
+              className="w-full"
+            />
+          </div>
+        )}
+      </div>
+      <button
+        onClick={handleSaveAll}
+        disabled={isSaving}
+        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg 
+          transition-all duration-200 flex items-center justify-center gap-2 shadow-lg 
+          hover:shadow-purple-600/25 active:scale-95 border border-purple-500/20
+          disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isSaving ? (
+          <>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+            <span>Guardando...</span>
+          </>
+        ) : (
+          <>
+            <FaSave />
+            <span>Guardar configuración</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+};
+
+export default CarouselSettings;
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\FloatingEmoji.jsx ###
+--------------------------------------------------------------------------------
+const FloatingEmoji = ({ item }) => (
+    <div
+      className="floating-item"
+      style={{
+        left: item.left,
+        animationDuration: item.animationDuration,
+        fontSize: item.size,
+      }}
+    >
+      {item.emoji}
+    </div>
+  );
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\FullScreenButton.jsx ###
+--------------------------------------------------------------------------------
+import { FaExpand, FaCompress } from 'react-icons/fa';
+
+const FullscreenButton = ({ isFullscreen, onClick }) => (
+  <button
+    onClick={onClick}
+    className="fullscreen-button"
+    aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Ver en pantalla completa'}
+  >
+    {isFullscreen ? <FaCompress size={24} /> : <FaExpand size={24} />}
+  </button>
+);
+
+export default FullscreenButton
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\LoginForm.jsx ###
+# Client Component
+--------------------------------------------------------------------------------
+// src/components/LoginForm.js
+"use client"
+import React, { useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useRouter } from 'next/navigation';
+
+
+const LoginForm = () => {
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Error al iniciar sesión:', error);
+      setError(error.message);
+    } else {
+      router.push('/admin/dashboard'); 
+    }
+  };
+
+
+  return (
+    <div className="max-w-md mx-auto bg-gray-800 rounded-lg shadow-md p-6">
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          value={email}
+          placeholder="Correo electrónico"
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-2 bg-gray-700 text-gray-100 border border-gray-600 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          placeholder="Contraseña"
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-2 bg-gray-700 text-gray-100 border border-gray-600 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+        {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+        <button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition"
+        >
+          Iniciar Sesión
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default LoginForm;
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\PolaroidCarousel.jsx ###
+--------------------------------------------------------------------------------
+import React from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, EffectFade } from "swiper/modules";
+import Image from "next/image";
+import { Permanent_Marker } from "next/font/google";
+import "swiper/css";
+import "swiper/css/effect-fade";
+
+const caveat = Permanent_Marker({
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const DECORATIONS = {
+  TAPE_LIGHT: {
+    className:
+      "w-[clamp(3rem,5vw,5rem)] h-[clamp(1.5rem,2.5vw,2.5rem)] bg-[#FFE4B5] opacity-30 rotate-3",
+    style: { boxShadow: "0 2px 4px rgba(0,0,0,0.1)" },
+  },
+};
+
+const PolaroidCarousel = ({
+  photos,
+  onSlideChange,
+  decorationType = "TAPE_LIGHT",
+  slideInterval = 5000,
+}) => {
+  const decoration = DECORATIONS[decorationType];
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      <div
+        className="relative 
+        w-[clamp(400px,45vw,1000px)] 
+        h-[clamp(500px,89vh,1200px)] 
+        bg-white shadow-2xl flex flex-col
+        transition-all duration-300 ease-in-out
+        transform-gpu"
+      >
+        {/* Cinta decorativa más grande */}
+        <div
+          className={`absolute -top-[clamp(1rem,1.5vw,2rem)] left-1/2 transform -translate-x-1/2 
+            transition-transform duration-300 ${decoration.className}`}
+          style={decoration.style}
+        />
+
+        {/* Área de la imagen con padding proporcionalmente más grande */}
+        <div className="relative flex-1 p-[clamp(0.75rem,1.5vw,2rem)]">
+          <div className="relative w-full h-full bg-black overflow-hidden">
+            <Swiper
+              effect="fade"
+              autoplay={{
+                delay: slideInterval,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: false,
+              }}
+              modules={[Autoplay, EffectFade]}
+              onSlideChange={onSlideChange}
+              className="w-full h-full"
+              loop={true}
+              allowTouchMove={false}
+              speed={1000}
+              fadeEffect={{
+                crossFade: true,
+              }}
+              // Configuraciones adicionales para asegurar el loop
+              watchSlidesProgress={true}
+              loopAdditionalSlides={2}
+              updateOnWindowResize={true}
+              observer={true}
+              observeParents={true}
+              lazyPreloadPrevNext={2}
+            >
+              {photos.map((photo) => (
+                <SwiperSlide key={photo.id} className="w-full h-full">
+                  <div className="relative w-full h-full bg-black">
+                    <div className="absolute inset-0">
+                      <Image
+                        src={photo.url || photo.image_url}
+                        alt={photo.comment || "Selfie del evento"}
+                        fill
+                        priority
+                        className="object-cover"
+                        sizes="(max-width: 76px) 90vw, 
+                       (max-width: 1280px) 45vw,
+                       55vw"
+                      />
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        </div>
+
+        <div
+          className="h-[7%] min-h-[clamp(50px,6vh,100px)] 
+  bg-white px-[clamp(1rem,1.5vw,2.5rem)] flex items-center justify-center"
+        >
+          <div className="transform rotate-[-2deg] relative -mt-6 2xl:-mt-12">
+            <div className="relative inline-block">
+              <span
+                className={`${caveat.className} text-[clamp(1.25rem,2vw,3.5rem)] text-gray-700 whitespace-nowrap`}
+              >
+                Real Meet 2024
+              </span>
+              {/* Sistema de subrayado como lo tenías originalmente */}
+              <div className="absolute bottom-0 left-0 w-full">
+                <div
+                  className="absolute bottom-0 left-0 w-full h-[1px] bg-black opacity-40"
+                  style={{ transform: "translateY(1px)" }}
+                />
+                <div
+                  className="absolute bottom-0 left-0 w-full h-[2px] bg-black opacity-60"
+                  style={{ transform: "translateY(2px)" }}
+                />
+                <div
+                  className="absolute bottom-0 left-0 w-full h-[3px] bg-black opacity-80"
+                  style={{ transform: "translateY(3px)" }}
+                />
+                <div
+                  className="absolute bottom-0 left-0 w-full h-[4px] bg-black"
+                  style={{ transform: "translateY(4px)" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bordes y sombras más pronunciados */}
+        <div
+          className="absolute inset-0 border-white pointer-events-none
+          border-[clamp(8px,1vw,20px)]
+          transition-all duration-300"
+        />
+        <div
+          className="absolute inset-0 
+          shadow-[0_0_clamp(20px,3vw,50px)_rgba(0,0,0,0.3)]
+          pointer-events-none transition-all duration-300"
+        />
+      </div>
+    </div>
+  );
+};
+
+export default PolaroidCarousel;
+
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\QRCode.jsx ###
+--------------------------------------------------------------------------------
+import Image from 'next/image';
+
+const QRCode = ({size}) => {
+  return (
+    <div className="p-[clamp(0.5rem,1.5vw,2rem)] rounded-2xl">
+      <h3 
+        className="text-white font-bold mb-[clamp(0.5rem,2vw,1rem)] text-center animate-pulse
+                   text-[clamp(1rem,2vw,2rem)]"
+        style={{
+          textShadow: `
+            0 0 clamp(5px,1vw,10px) rgba(255,255,255,0.4),
+            0 0 clamp(10px,2vw,20px) rgba(255,255,255,0.2)
+          `,
+          background: 'linear-gradient(to right, #fff, #e0e0e0, #fff)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundSize: '200% auto',
+          animation: 'shine 3s linear infinite'
+        }}
+      >
+        ¡Dejanos tu Selfie!
+      </h3>
+      <div 
+        style={{
+          filter: `
+            drop-shadow(0 0 clamp(5px,1vw,10px) rgba(255,255,255,0.3))
+            drop-shadow(0 0 clamp(10px,2vw,20px) rgba(255,255,255,0.2))
+          `,
+          transition: 'all 0.3s ease'
+        }}
+        className="hover:brightness-110 hover:scale-105 flex flex-col justify-center items-center
+                   bg-white rounded-lg relative w-[clamp(180px,15vw,280px)] h-[clamp(180px,15vw,280px)]"
+      >
+        <Image 
+          src={"/images/qr.png"}
+          alt="QR Code para selfie"
+          fill
+          priority
+          className="object-contain p-[0.2rem]"
+          sizes="(max-width: 768px) 180px, 280px"
+        />
+      </div>
+    </div>
+  );
+};
+
+export default QRCode;
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\UploadPhoto.jsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client";
+
+import React, { useState, useCallback, useRef } from "react";
+import imageCompression from "browser-image-compression";
+import { supabase } from "../utils/supabaseClient";
+import { FaTimes } from "react-icons/fa";
+import { toast } from "react-toastify";
+import Image from "next/image";
+import CameraIcon from "./CameraIcon";
+import { motion, AnimatePresence } from "framer-motion";
+import { BsEmojiSmile } from "react-icons/bs";
+import EmojiPicker from "emoji-picker-react";
+
+// Configuración de compresión de imagen optimizada para móviles
+const compressionOptions = {
+  maxSizeMB: 1, // Reducido para móviles
+  maxWidthOrHeight: 1080,
+  useWebWorker: true,
+  initialQuality: 0.8, // Balance entre calidad y tamaño
+  alwaysKeepResolution: false
+};
+
+const UploadPhoto = () => {
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [comment, setComment] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
+  // Refs para mejor manejo de memoria
+  const fileInputRef = useRef(null);
+  const previewUrlRef = useRef(null);
+
+  // Optimización de la compresión y preview
+  const handleFileChange = useCallback(async (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile?.type.startsWith("image/")) {
+      toast.error("Por favor, selecciona una imagen válida");
+      return;
+    }
+
+    try {
+      // Crear preview inmediato para mejor UX
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+      previewUrlRef.current = URL.createObjectURL(selectedFile);
+      setPreview(previewUrlRef.current);
+
+      // Comprimir en segundo plano
+      const compressedFile = await imageCompression(selectedFile, compressionOptions);
+      setFile(compressedFile);
+    } catch (error) {
+      console.error("Error al procesar la imagen:", error);
+      toast.error("Error al procesar la imagen");
+      handleRemovePhoto();
+    }
+  }, []);
+
+  const handleRemovePhoto = useCallback(() => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+    setFile(null);
+    setPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
+
+  // Optimización de la subida
+  const handleUpload = useCallback(async () => {
+    if (!file) {
+      toast.error("Selecciona una foto antes de compartir");
+      return;
+    }
+
+    setUploading(true);
+    const fileName = `${Date.now()}_${file.name}`;
+
+    try {
+      // Subida paralela a storage y base de datos
+      const [uploadResult, publicUrlResult] = await Promise.all([
+        supabase.storage.from("photos").upload(fileName, file),
+        supabase.storage.from("photos").getPublicUrl(fileName)
+      ]);
+
+      if (uploadResult.error) throw uploadResult.error;
+
+      const imageUrl = publicUrlResult.data.publicUrl;
+      const { error: insertError } = await supabase
+        .from("uploads")
+        .insert([{ image_url: imageUrl, comment }]);
+
+      if (insertError) throw insertError;
+
+      toast.success("¡Foto compartida exitosamente!");
+      handleRemovePhoto();
+      setComment("");
+    } catch (error) {
+      console.error("Error en la subida:", error);
+      toast.error("Error al compartir la foto");
+    } finally {
+      setUploading(false);
+    }
+  }, [file, comment]);
+
+  const onEmojiClick = useCallback((emojiObject) => {
+    setComment(prev => prev + emojiObject.emoji);
+    setShowEmojiPicker(false);
+  }, []);
+
+  return (
+    <div className="h-[100dvh] flex flex-col px-4 max-w-md mx-auto">
+      <div className="flex-none flex justify-center">
+        <div className="p-2 rounded-full">
+          <Image
+            src="/images/logo.png"
+            width={100}
+            height={100}
+            alt="Logo"
+            className="object-contain"
+            priority
+          />
+        </div>
+      </div>
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col gap-3 h-full">
+        <input
+          type="file"
+          id="photo-input"
+          accept="image/*"
+          capture
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        <div className="relative flex-1 max-h-[72%]">
+          <button
+            onClick={() => document.getElementById("photo-input").click()}
+            className="w-full h-full bg-purple-800/20 rounded-3xl  backdrop-blur-md border border-white/10 flex flex-col items-center justify-center overflow-hidden transition-all hover:bg-purple-800/30 hover:border-white/20 shadow-lg active:scale-95" // Escala al presionar
+          >
+            {preview ? (
+              <>
+                <div className="w-full h-full aspect-[4/3]">
+                  <img
+                    src={preview}
+                    alt="Vista previa"
+                    className="object-cover w-full h-full rounded-3xl transition-transform duration-300 ease-in-out hover:scale-105" // Transición de escala al hacer hover
+                  />
+                </div>
+                <button
+                  onClick={handleRemovePhoto}
+                  className="absolute top-3 right-3 w-9 h-9 bg-black/50 hover:bg-black/70 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all border border-white/10"
+                  aria-label="Eliminar foto"
+                >
+                  <FaTimes className="text-lg" />
+                </button>
+              </>
+            ) : (
+              <div className="text-center p-4 space-y-2">
+                <div className="inline-block border border-white/20 p-4 rounded-full bg-purple-800/20 animate-pulse">
+                  {" "}
+                  {/* Animación de pulso */}
+                  <CameraIcon className="w-6 h-6 text-white" />
+                </div>
+                <p className="text-white/90 text-sm px-3 font-medium">
+                  Saca una selfie y compartila con nosotros!
+                </p>
+              </div>
+            )}
+          </button>
+        </div>
+        <div className="flex-none h-[12%] relative">
+        <div className="relative w-full h-full flex items-center">
+          <textarea
+            value={comment}
+            onChange={(e) => {
+              if (e.target.value.length <= 180) {
+                setComment(e.target.value);
+              }
+            }}
+            maxLength={180}
+            placeholder="Agrega un comentario..."
+            className="w-full h-full p-3 pr-12 bg-purple-800/20 backdrop-blur-md text-white placeholder-white/50 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/25 transition-all hover:bg-purple-800/30 focus:bg-purple-800/30"
+          />
+          <button
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="absolute right-3 bottom-3 p-2 text-white/80 hover:text-white transition-colors"
+            type="button"
+          >
+            <BsEmojiSmile className="w-5 h-5" />
+          </button>
+        </div>
+
+        {showEmojiPicker && (
+          <div className="fixed inset-x-0 bottom-0 z-50 pb-safe">
+            <div className="relative">
+              <div className="flex items-center justify-between px-4 py-2 bg-purple-900/95 border-b border-white/10 backdrop-blur-md">
+                <span className="text-white/90 text-sm font-medium">Emojis</span>
+                <button
+                  onClick={() => setShowEmojiPicker(false)}
+                  className="p-2 text-white/80 hover:text-white"
+                >
+                  <FaTimes className="w-4 h-4" />
+                </button>
+              </div>
+
+              <EmojiPicker
+                onEmojiClick={onEmojiClick}
+                width="100%"
+                height={300}
+                theme="dark"
+                skinTonesDisabled
+                searchDisabled
+                lazyLoadEmojis
+                previewConfig={{
+                  showPreview: false
+                }}
+                categories={['smileys_people', 'animals_nature', 'food_drink', 'objects', 'symbols', 'flags']}
+              />
+            </div>
+            
+     
+            <div 
+              className="fixed inset-0 bg-black/40 -z-10"
+              onClick={() => setShowEmojiPicker(false)}
+            />
+          </div>
+        )}
+      </div>
+
+        <div className="flex-none mb-4">
+          <motion.button
+            whileTap={{ scale: 0.95 }} // Escala al hacer tap
+            onClick={handleUpload}
+            disabled={uploading}
+            className={`w-full py-3 rounded-xl text-white font-medium transition-all shadow-lg border border-white/10 ${
+              uploading
+                ? "bg-gray-500/50 cursor-not-allowed"
+                : "bg-pink-600 hover:bg-pink-700 active:bg-pink-700"
+            }`}
+          >
+            {uploading ? "Compartiendo..." : "Compartir selfie"}
+          </motion.button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UploadPhoto;
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\CommentBubble\CommentBubble.jsx ###
+--------------------------------------------------------------------------------
+// CommentBubble.jsx
+import { useEffect, useState } from 'react';
+import styles from './styles.module.css';
+
+const DEFAULT_COMMENT = '❤️ ❤️ ❤️';
+
+const CommentBubble = ({ comment }) => {
+  const [displayedComment, setDisplayedComment] = useState('');
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isGlowing, setIsGlowing] = useState(false);
+
+  useEffect(() => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setDisplayedComment(comment || DEFAULT_COMMENT);
+      setIsTransitioning(false);
+    }, 300);
+  }, [comment]);
+
+  useEffect(() => {
+    const glowInterval = setInterval(() => {
+      setIsGlowing(true);
+      setTimeout(() => setIsGlowing(false), 1000);
+    }, Math.random() * 5000 + 3000);
+
+    return () => clearInterval(glowInterval);
+  }, []);
+
+  return (
+    <div className={`
+      ${styles.commentBubble} 
+      ${styles.floating}
+    `}>
+      <div className={`
+        ${styles.bubbleContent}
+        ${isGlowing ? styles.glow : ''}
+      `}>
+        <div className={styles.glowEffect} />
+        
+        <p className={`
+          ${styles.commentText} 
+          ${isTransitioning ? styles.fadeOut : styles.fadeIn}
+          text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-3xl 2xl:text-4xl
+          font-semibold text-center
+        `}>
+          {displayedComment || '❤️ ❤️ ❤️'}
+        </p>
+
+        <div className={styles.decorationTop} />
+        <div className={styles.decorationBottom} />
+      </div>
+    </div>
+  );
+};
+
+export default CommentBubble;
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\ui\button.tsx ###
+--------------------------------------------------------------------------------
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/app/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\ui\card.tsx ###
+--------------------------------------------------------------------------------
+import * as React from "react"
+
+import { cn } from "@/app/lib/utils"
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\ui\select.tsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client"
+
+import * as React from "react"
+import * as SelectPrimitive from "@radix-ui/react-select"
+import { Check, ChevronDown, ChevronUp } from "lucide-react"
+
+import { cn } from "@/app/lib/utils"
+
+const Select = SelectPrimitive.Root
+
+const SelectGroup = SelectPrimitive.Group
+
+const SelectValue = SelectPrimitive.Value
+
+const SelectTrigger = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <SelectPrimitive.Icon asChild>
+      <ChevronDown className="h-4 w-4 opacity-50" />
+    </SelectPrimitive.Icon>
+  </SelectPrimitive.Trigger>
+))
+SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
+
+const SelectScrollUpButton = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.ScrollUpButton
+    ref={ref}
+    className={cn(
+      "flex cursor-default items-center justify-center py-1",
+      className
+    )}
+    {...props}
+  >
+    <ChevronUp className="h-4 w-4" />
+  </SelectPrimitive.ScrollUpButton>
+))
+SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName
+
+const SelectScrollDownButton = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.ScrollDownButton>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.ScrollDownButton
+    ref={ref}
+    className={cn(
+      "flex cursor-default items-center justify-center py-1",
+      className
+    )}
+    {...props}
+  >
+    <ChevronDown className="h-4 w-4" />
+  </SelectPrimitive.ScrollDownButton>
+))
+SelectScrollDownButton.displayName =
+  SelectPrimitive.ScrollDownButton.displayName
+
+const SelectContent = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
+>(({ className, children, position = "popper", ...props }, ref) => (
+  <SelectPrimitive.Portal>
+    <SelectPrimitive.Content
+      ref={ref}
+      className={cn(
+        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        position === "popper" &&
+          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+        className
+      )}
+      position={position}
+      {...props}
+    >
+      <SelectScrollUpButton />
+      <SelectPrimitive.Viewport
+        className={cn(
+          "p-1",
+          position === "popper" &&
+            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+        )}
+      >
+        {children}
+      </SelectPrimitive.Viewport>
+      <SelectScrollDownButton />
+    </SelectPrimitive.Content>
+  </SelectPrimitive.Portal>
+))
+SelectContent.displayName = SelectPrimitive.Content.displayName
+
+const SelectLabel = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.Label
+    ref={ref}
+    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)}
+    {...props}
+  />
+))
+SelectLabel.displayName = SelectPrimitive.Label.displayName
+
+const SelectItem = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className
+    )}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <SelectPrimitive.ItemIndicator>
+        <Check className="h-4 w-4" />
+      </SelectPrimitive.ItemIndicator>
+    </span>
+
+    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+  </SelectPrimitive.Item>
+))
+SelectItem.displayName = SelectPrimitive.Item.displayName
+
+const SelectSeparator = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.Separator
+    ref={ref}
+    className={cn("-mx-1 my-1 h-px bg-muted", className)}
+    {...props}
+  />
+))
+SelectSeparator.displayName = SelectPrimitive.Separator.displayName
+
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
+}
+
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\ui\slider.tsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client"
+
+import * as React from "react"
+import * as SliderPrimitive from "@radix-ui/react-slider"
+
+import { cn } from "@/app/lib/utils"
+
+const Slider = React.forwardRef<
+  React.ElementRef<typeof SliderPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <SliderPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative flex w-full touch-none select-none items-center",
+      className
+    )}
+    {...props}
+  >
+    <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gray-700">
+      <SliderPrimitive.Range className="absolute h-full bg-purple-500" />
+    </SliderPrimitive.Track>
+    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-purple-500 bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
+  </SliderPrimitive.Root>
+))
+Slider.displayName = SliderPrimitive.Root.displayName
+
+export { Slider }
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\ui\switch.tsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client"
+
+import * as React from "react"
+import * as SwitchPrimitives from "@radix-ui/react-switch"
+
+import { cn } from "@/app/lib/utils"
+
+const Switch = React.forwardRef<
+  React.ElementRef<typeof SwitchPrimitives.Root>,
+  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
+>(({ className, ...props }, ref) => (
+  <SwitchPrimitives.Root
+    className={cn(
+      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-purple-500 data-[state=unchecked]:bg-gray-700",
+      className
+    )}
+    {...props}
+    ref={ref}
+  >
+    <SwitchPrimitives.Thumb
+      className={cn(
+        "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+      )}
+    />
+  </SwitchPrimitives.Root>
+))
+Switch.displayName = SwitchPrimitives.Root.displayName
+
+export { Switch }
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\components\ui\tabs.tsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client"
+
+import * as React from "react"
+import * as TabsPrimitive from "@radix-ui/react-tabs"
+
+import { cn } from "@/app/lib/utils"
+
+const Tabs = TabsPrimitive.Root
+
+const TabsList = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn(
+      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+      className
+    )}
+    {...props}
+  />
+))
+TabsList.displayName = TabsPrimitive.List.displayName
+
+const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+      className
+    )}
+    {...props}
+  />
+))
+TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
+
+const TabsContent = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Content
+    ref={ref}
+    className={cn(
+      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+      className
+    )}
+    {...props}
+  />
+))
+TabsContent.displayName = TabsPrimitive.Content.displayName
+
+export { Tabs, TabsList, TabsTrigger, TabsContent }
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+SECCIÓN: LIB
+================================================================================
+
+
+### Archivo: src\app\lib\utils.ts ###
+--------------------------------------------------------------------------------
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+ 
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\utils\supabaseClient.jsx ###
+--------------------------------------------------------------------------------
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables')
+}
+
+ const supabase = createClientComponentClient({
+  supabaseUrl: supabaseUrl,
+  supabaseKey: supabaseAnonKey,
+});
+
+export {supabase};
+--------------------------------------------------------------------------------
+
+
+================================================================================
+SECCIÓN: HOOKS
+================================================================================
+
+
+### Archivo: src\app\hooks\useCarouselSettings .jsx ###
+--------------------------------------------------------------------------------
+// Este archivo debe estar en: src/app/hooks/useCarouselSettings.js
+import { useState, useEffect } from 'react';
+import { supabase } from '../utils/supabaseClient';
+import { toast } from 'react-toastify';
+
+const STORAGE_KEY = 'carousel_settings';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos en milisegundos
+
+export const useCarouselSettings = () => {
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Función para obtener configuración del localStorage
+  const getLocalSettings = () => {
+    if (typeof window === 'undefined') return null;
+    
+    const cached = localStorage.getItem(STORAGE_KEY);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      // Verificar si el cache es válido (menos de 5 minutos)
+      if (Date.now() - timestamp < CACHE_DURATION) {
+        return data;
+      }
+    }
+    return null;
+  };
+
+  // Función para guardar en localStorage
+  const saveLocalSettings = (data) => {
+    if (typeof window === 'undefined') return;
+    
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        data,
+        timestamp: Date.now(),
+      })
+    );
+  };
+
+  // Función para obtener configuración de Supabase
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      
+      // Intentar obtener del cache primero
+      const cachedSettings = getLocalSettings();
+      if (cachedSettings) {
+        setSettings(cachedSettings);
+        setLoading(false);
+        // Actualizar en segundo plano
+        fetchFromSupabase();
+        return;
+      }
+
+      await fetchFromSupabase();
+
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      setError(error);
+      toast.error('Error al cargar la configuración');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función específica para obtener datos de Supabase
+  const fetchFromSupabase = async () => {
+    const { data, error } = await supabase
+      .from('carousel_settings')
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    
+    setSettings(data);
+    saveLocalSettings(data);
+  };
+
+ 
+  const saveSettings = async (newSettings) => {
+    try {
+      const { error } = await supabase
+        .from('carousel_settings')
+        .upsert(newSettings);
+
+      if (error) throw error;
+
+      setSettings(newSettings);
+      saveLocalSettings(newSettings);
+      
+      return true; // Indicar éxito
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      throw error; // Re-lanzar el error para manejarlo en el componente
+    }
+  };
+
+  // Inicializar configuración y suscripción a cambios
+  useEffect(() => {
+    fetchSettings();
+
+    // Suscribirse a cambios en tiempo real
+    const channel = supabase
+      .channel('carousel-settings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'carousel_settings'
+        },
+        (payload) => {
+          console.log('Settings changed:', payload);
+          // Actualizar solo si los datos son diferentes
+          if (JSON.stringify(payload.new) !== JSON.stringify(settings)) {
+            setSettings(payload.new);
+            saveLocalSettings(payload.new);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return {
+    settings,
+    loading,
+    error,
+    saveSettings,
+    refreshSettings: fetchSettings
+  };
+};
+--------------------------------------------------------------------------------
+
+
+================================================================================
+SECCIÓN: OTHER
+================================================================================
+
+
+### Archivo: tailwind.config.js ###
+--------------------------------------------------------------------------------
+
+
+const config = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        screens: {
+          '3xl': '2560px',
+          '4xl': '3840px',
+          '5xl': '5120px',
+        },
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+}
+export default config
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\layout.jsx ###
+--------------------------------------------------------------------------------
+// app/layout.jsx
+
+import './globals.css'
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="es">
+      <body className="">
+        <main>{children}</main>
+        <ToastContainer />
+      </body>
+    </html>
+  );
+}
+
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\middleware.jsx ###
+--------------------------------------------------------------------------------
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { NextResponse } from 'next/server'
+
+export async function middleware(req) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req, res })
+  await supabase.auth.getSession()
+  return res
+}
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\page.jsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client";
+import React from "react";
+import { motion } from "framer-motion";
+import UploadPhoto from "@/app/components/UploadPhoto";
+
+// Componente para estrella brillante animada
+const ShimmeringStar = ({ cx, cy, size = 0.15 }) => {
+  return (
+    <motion.g>
+      <motion.circle
+        cx={cx}
+        cy={cy}
+        r={size}
+        fill="white"
+        initial={{ opacity: 0.4 }}
+        animate={{
+          opacity: [0.4, 0.7, 0.4],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: Math.random() * 5 + 4,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      <motion.circle
+        cx={cx}
+        cy={cy}
+        r={size * 3}
+        fill="url(#star-shimmer)"
+        initial={{ opacity: 0.1 }}
+        animate={{
+          opacity: [0.1, 0.2, 0.1],
+          scale: [1, 1.05, 1],
+        }}
+        transition={{
+          duration: Math.random() * 6 + 5,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+    </motion.g>
+  );
+};
+
+// Componente para partículas flotantes animadas
+const FloatingParticle = ({ cx, cy, size }) => (
+  <motion.circle
+    cx={cx}
+    cy={cy}
+    r={size}
+    fill="white"
+    initial={{ opacity: 0.2, x: cx, y: cy }}
+    animate={{
+      opacity: [0.2, 0.4, 0.2],
+      x: [cx, cx + Math.random() * 2 - 1, cx],
+      y: [cy, cy + Math.random() * 2 - 1, cy],
+    }}
+    transition={{
+      duration: Math.random() * 6 + 4,
+      repeat: Infinity,
+      ease: "easeInOut",
+    }}
+  />
+);
+
+export default function Home() {
+  const shimmeringStars = Array.from({ length: 40 }, () => ({
+    cx: Math.random() * 100,
+    cy: Math.random() * 100,
+    size: Math.random() * 0.15 + 0.05,
+  }));
+
+  const floatingParticles = Array.from({ length: 50 }, () => ({
+    cx: Math.random() * 100,
+    cy: Math.random() * 100,
+    size: Math.random() * 0.08 + 0.02,
+  }));
+
+  return (
+    <div className="min-h-screen w-full relative">
+      <svg
+        className="fixed inset-0 w-full h-full"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        <defs>
+          <radialGradient id="star-shimmer" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FF00FF" />
+            <stop offset="20%" stopColor="#CC00CC" />
+            <stop offset="35%" stopColor="#660066" />
+            <stop offset="45%" stopColor="#300030" />
+            <stop offset="55%" stopColor="#200020" />
+            <stop offset="65%" stopColor="#300030" />
+            <stop offset="70%" stopColor="#000066" />
+            <stop offset="80%" stopColor="#000080" />
+            <stop offset="90%" stopColor="#000099" />
+            <stop offset="100%" stopColor="#0000AA" />
+          </linearGradient>
+          <filter id="star-glow">
+            <feGaussianBlur stdDeviation="0.3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+          <filter id="background-blur">
+            <feGaussianBlur stdDeviation="4" />
+            <feColorMatrix
+              type="matrix"
+              values="1 0 0 0 0
+                     0 1 0 0 0
+                     0 0 1 0 0
+                     0 0 0 0.9 0"
+            />
+          </filter>
+        </defs>
+
+        <rect width="100" height="100" fill="black" />
+
+        <g filter="url(#background-blur)">
+          <rect
+            width="100"
+            height="100"
+            fill="url(#bg-gradient)"
+            opacity="0.85"
+          />
+          <circle cx="20" cy="20" r="30" fill="#660066" opacity="0.3" />
+          <circle cx="80" cy="80" r="30" fill="#000080" opacity="0.3" />
+        </g>
+
+        <g filter="url(#star-glow)">
+          {Array.from({ length: 150 }).map((_, i) => (
+            <circle
+              key={`static-star-${i}`}
+              cx={Math.random() * 100}
+              cy={Math.random() * 100}
+              r={Math.random() * 0.1 + 0.02}
+              fill="white"
+              opacity={Math.random() * 0.3 + 0.1}
+            />
+          ))}
+        </g>
+
+        <g>
+          {shimmeringStars.map((star, i) => (
+            <ShimmeringStar
+              key={`shimmering-star-${i}`}
+              cx={star.cx}
+              cy={star.cy}
+              size={star.size}
+            />
+          ))}
+        </g>
+
+        {/* Partículas flotantes en movimiento */}
+        <g>
+          {floatingParticles.map((particle, i) => (
+            <FloatingParticle
+              key={`floating-particle-${i}`}
+              cx={particle.cx}
+              cy={particle.cy}
+              size={particle.size}
+            />
+          ))}
+        </g>
+      </svg>
+
+      <div className="relative">
+        <UploadPhoto />
+      </div>
+    </div>
+  );
+}
+
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\admin\page.jsx ###
+# Client Component
+--------------------------------------------------------------------------------
+// app/admin/page.tsx
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "../utils/supabaseClient";
+
+
+const AdminPage = () => {
+    const router = useRouter();
+
+    useEffect(() => {
+        const fetchSession = async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            router.push('/admin/dashboard')
+          } else {
+            router.push('/admin/login');
+          }
+        };
+      fetchSession();
+    }, [router]);
+
+
+  return null;
+};
+
+export default AdminPage;
+
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\carousel\page.jsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client";
+import React, { useEffect, useState, useCallback } from "react";
+import { useWindowSize } from "@react-hook/window-size";
+import { FaExpand, FaCompress } from "react-icons/fa";
+import Confetti from "react-confetti";
+import Image from "next/image";
+import { supabase } from "@/app/utils/supabaseClient";
+import PolaroidCarousel from "@/app/components/PolaroidCarousel";
+import CommentBubble from "@/app/components/CommentBubble/CommentBubble";
+import QRCode from "@/app/components/QRCode";
+
+import styles from "./styles.module.css";
+
+const DEFAULT_SETTINGS = {
+  slide_interval: 5000,
+  photos_limit: "all",
+  flash_enabled: true,
+  flash_interval: 10000,
+  emojis_enabled: true,
+  emoji_interval: 1000,
+  selected_emojis: "❤️,🧡,💛,💚,💙,💜,🎉,🎊,🎈,🥳",
+  confetti_enabled: true,
+  confetti_interval: 30000,
+};
+
+const CarouselPage = () => {
+  const [width, height] = useWindowSize();
+  const [photos, setPhotos] = useState([]);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [loading, setLoading] = useState(true);
+  const [showFlash, setShowFlash] = useState(false);
+  const [floatingItems, setFloatingItems] = useState([]);
+  const [confettiActive, setConfettiActive] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState("iPadMini");
+  const [currentComment, setCurrentComment] = useState("");
+
+  const fetchSettings = async () => {
+    const { data, error } = await supabase
+      .from("carousel_settings")
+      .select("*")
+      .single();
+
+    if (!error && data) {
+      setSettings(data);
+    }
+  };
+
+  const fetchPhotos = useCallback(async () => {
+    try {
+      let query = supabase
+        .from("uploads")
+        .select("*")
+        .eq("approved", true)
+        .order("created_at", { ascending: false });
+
+      if (settings?.photos_limit && settings.photos_limit !== "all") {
+        query = query.limit(parseInt(settings.photos_limit));
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      setPhotos(data || []);
+    } catch (error) {
+      console.error("Error fetching photos:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [settings?.photos_limit]);
+
+  const triggerFlash = useCallback(() => {
+    if (settings.flash_enabled) {
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 200);
+    }
+  }, [settings.flash_enabled]);
+
+  const createFloatingItem = useCallback(() => {
+    if (settings.emojis_enabled) {
+      const emojis = settings.selected_emojis
+        .split(",")
+        .filter((emoji) => emoji.trim());
+      const newItem = {
+        id: Date.now(),
+        emoji: emojis[Math.floor(Math.random() * emojis.length)].trim(),
+        left: `${Math.random() * 100}%`,
+        animationDuration: `${2 + Math.random() * 3}s`,
+        size: `${1.5 + Math.random() * 1}rem`,
+      };
+
+      setFloatingItems((prev) => [...prev, newItem]);
+      setTimeout(() => {
+        setFloatingItems((prev) =>
+          prev.filter((item) => item.id !== newItem.id)
+        );
+      }, parseFloat(newItem.animationDuration) * 1000);
+    }
+  }, [settings.emojis_enabled, settings.selected_emojis]);
+
+  useEffect(() => {
+    const disableScroll = () => {
+      document.documentElement.style.cssText = `
+        overflow: hidden !important;
+        height: 100vh;
+        width: 100vw;
+        position: fixed;
+        touch-action: none;
+        -webkit-overflow-scrolling: none;
+        overscroll-behavior: none;
+        margin: 0;
+        padding: 0;
+      `;
+      document.body.style.cssText = document.documentElement.style.cssText;
+    };
+
+    disableScroll();
+    fetchSettings();
+
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    if (settings) {
+      fetchPhotos();
+      const pollInterval = setInterval(fetchPhotos, 30000);
+
+      // Separar los intervalos para cada efecto
+      const emojiInterval = setInterval(() => {
+        if (Math.random() < 0.8) createFloatingItem();
+      }, settings.emoji_interval || DEFAULT_SETTINGS.emoji_interval);
+
+      // Intervalo específico para el flash
+      const flashInterval = setInterval(() => {
+        if (settings.flash_enabled) {
+          triggerFlash();
+        }
+      }, settings.flash_interval || DEFAULT_SETTINGS.flash_interval);
+
+      const confettiInterval = setInterval(() => {
+        if (settings.confetti_enabled) {
+          setConfettiActive(true);
+          setTimeout(() => setConfettiActive(false), 5000);
+        }
+      }, settings.confetti_interval || DEFAULT_SETTINGS.confetti_interval);
+
+      return () => {
+        clearInterval(pollInterval);
+        clearInterval(emojiInterval);
+        clearInterval(flashInterval);
+        clearInterval(confettiInterval);
+      };
+    }
+  }, [settings, fetchPhotos, createFloatingItem, triggerFlash]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("carousel-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "carousel_settings",
+        },
+        () => fetchSettings()
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "uploads",
+          filter: "approved=eq.true",
+        },
+        () => fetchPhotos()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchPhotos]);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!isFullscreen) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error("Error toggling fullscreen:", error);
+    }
+  };
+
+  const handleSlideChange = (swiper) => {
+    setCurrentComment(photos[swiper.realIndex]?.comment || "");
+  };
+
+  if (loading) {
+    return (
+      <div className={`${styles.container} flex items-center justify-center`}>
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.container}>
+      {/* Confetti Effect */}
+      <Confetti
+        width={width}
+        height={height}
+        numberOfPieces={confettiActive ? 200 : 0}
+        colors={["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5"]}
+        recycle={false}
+      />
+
+      {/* Floating Emojis */}
+      {floatingItems.map((item) => (
+        <div
+          key={item.id}
+          className={styles.floatingItem}
+          style={{
+            left: item.left,
+            animationDuration: item.animationDuration,
+            fontSize: item.size,
+          }}
+        >
+          {item.emoji}
+        </div>
+      ))}
+
+      {/* Main Grid Layout */}
+      <div className={styles.gridLayout}>
+        <div className={styles.leftSection}>
+        <div className={styles.logoContainer}>
+  <Image
+    src="/images/logo.png"
+    alt="Real Meet 2024"
+    width={360}
+    height={80}
+    className="
+      w-[clamp(180px,15vw,220px)]
+      sm:w-[clamp(200px,18vw,240px)]
+      md:w-[clamp(220px,20vw,260px)]
+      lg:w-[clamp(240px,22vw,280px)]
+      xl:w-[clamp(260px,25vw,380px)]
+      2xl:w-[clamp(280px,30vw,380px)]
+      h-auto object-contain 
+      transition-transform duration-300
+      hover:scale-105
+    "
+    priority
+  />
+</div>
+          <CommentBubble comment={currentComment} />
+        </div>
+
+        <div className={styles.centerSection}>
+          <div className={styles.deviceWrapper}>
+            <PolaroidCarousel
+              photos={photos}
+              onSlideChange={handleSlideChange}
+              decorationType="TAPE_LIGHT"
+              slideInterval={settings.slide_interval}
+            />
+          </div>
+        </div>
+        <div className={styles.rightSection}>
+          <div className="mt-4 lg:mt-8 xl:mt-16 w-full flex justify-center">
+            <QRCode
+              size={window.innerWidth <= 1366 ? 200 : 280} // Tamaño condicional
+            />
+          </div>
+          <div className="w-full flex justify-center">
+            <Image
+              src="/images/logo-blanco.png"
+              alt="Logo empresa"
+              width={window.innerWidth <= 1366 ? 180 : 260}
+              height={window.innerWidth <= 1366 ? 100 : 150}
+              className="object-contain opacity-90 hover:opacity-100 transition-opacity"
+              priority
+            />
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={toggleFullscreen}
+        className="fixed top-4 right-4 w-10 h-10 flex items-center justify-center bg-black/40 hover:bg-black/60 text-white rounded-full shadow-xl border border-white/50 transition-all duration-300 z-50"
+        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+      >
+        {isFullscreen ? <FaCompress size={18} /> : <FaExpand size={18} />}
+      </button>
+
+      {showFlash && <div className={styles.flash} />}
+    </div>
+  );
+};
+
+export default CarouselPage;
+
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\admin\dashboard\page.jsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { FaCheck, FaTrash, FaCog, FaImages, FaSignOutAlt } from "react-icons/fa";
+import { supabase } from "../../utils/supabaseClient";
+import { toast } from "react-toastify";
+import CarouselSettings from "@/app/components/CarouselSettings";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
+import { FaExpand } from 'react-icons/fa';
+
+
+const AdminPanel = () => {
+  const [uploads, setUploads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState('newest');
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        fetchPendingUploads();
+      } else {
+        router.push("/admin/login");
+      }
+    };
+
+    fetchSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session) {
+          fetchPendingUploads();
+        } else {
+          setUploads([]);
+          router.push("/admin/login");
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [router]);
+
+  const fetchPendingUploads = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("uploads")
+      .select("*")
+      .eq("approved", false)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      toast.error("Error al obtener las fotos pendientes");
+    } else {
+      setUploads(data);
+    }
+    setLoading(false);
+  };
+
+  const approveUpload = async (id) => {
+    const { error } = await supabase
+      .from("uploads")
+      .update({ approved: true })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Error al aprobar la foto");
+    } else {
+      toast.success("Foto aprobada exitosamente");
+      fetchPendingUploads();
+    }
+  };
+
+  const deleteUpload = async (id, image_url) => {
+    const imagePath = image_url.split("/storage/v1/object/public/photos/")[1];
+
+    const { error: deleteError } = await supabase
+      .from("uploads")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      toast.error("Error al eliminar el registro");
+      return;
+    }
+
+    const { error: storageError } = await supabase.storage
+      .from("photos")
+      .remove([imagePath]);
+
+    if (storageError) {
+      toast.error("Error al eliminar la imagen");
+    } else {
+      toast.success("Foto eliminada exitosamente");
+      fetchPendingUploads();
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+  };
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 flex flex-col p-2 sm:p-4">
+      <div className="w-full max-w-lg mx-auto md:max-w-4xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 bg-gray-800/50 p-3 rounded-lg backdrop-blur-sm border border-gray-700/50 shadow-lg">
+          <div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              Panel de Administración
+            </h1>
+            <p className="text-gray-400 text-sm">
+              Gestión de fotos y configuración
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full sm:w-auto bg-red-600/90 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-all 
+            duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-red-600/25 active:scale-95
+            border border-red-500/20 backdrop-blur-sm text-sm"
+          >
+            <FaSignOutAlt />
+            <span>Cerrar Sesión</span>
+          </button>
+        </div>
+
+        {/* Tabs Container */}
+        <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 shadow-lg backdrop-blur-sm overflow-hidden">
+          <Tabs defaultValue="photos" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 p-0 h-12 bg-gray-900/50">
+              <TabsTrigger 
+                value="photos" 
+                className="w-full h-full flex items-center justify-center gap-2
+                  data-[state=active]:bg-purple-600 data-[state=active]:text-white 
+                  data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:bg-gray-800/50
+                  transition-all duration-200 rounded-none border-0 text-sm"
+              >
+                <FaImages className="text-lg" />
+                <span className="font-medium">Pendientes</span>
+                {uploads.length > 0 && (
+                  <span className="ml-1 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs">
+                    {uploads.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="settings" 
+                className="w-full h-full flex items-center justify-center gap-2
+                  data-[state=active]:bg-purple-600 data-[state=active]:text-white 
+                  data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:bg-gray-800/50
+                  transition-all duration-200 rounded-none border-0 text-sm"
+              >
+                <FaCog className="text-lg" />
+                <span className="font-medium">Configuración</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="photos" className="mt-0 p-2">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-3" />
+                  <p className="text-gray-400 text-sm">Cargando fotos...</p>
+                </div>
+              ) : uploads.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <FaImages className="text-3xl mb-3 opacity-50" />
+                  <p className="text-sm">No hay fotos pendientes</p>
+                </div>
+              ) : (
+                <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+                  {uploads.map((upload) => (
+                    <div
+                      key={upload.id}
+                      className="bg-gray-700/50 rounded-lg overflow-hidden border border-gray-600/50 
+                      shadow-lg transition-all duration-300 hover:md:shadow-xl hover:md:scale-[1.02]"
+                    >
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <img
+                          src={upload.image_url}
+                          alt="Foto pendiente"
+                          className="w-full h-full object-cover"
+                          onClick={() => window.open(upload.image_url, '_blank')}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-40" />
+                      </div>
+                      <div className="p-3 space-y-3">
+                        <p className="text-sm text-gray-300 line-clamp-2">
+                          {upload.comment || (
+                            <span className="text-gray-500 italic">Sin comentario</span>
+                          )}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => approveUpload(upload.id)}
+                            className="bg-green-600/90 active:bg-green-700 text-white py-2 px-3 
+                            rounded-lg transition-colors duration-200 flex items-center justify-center gap-2
+                            shadow-lg active:scale-95 border border-green-500/20
+                            text-sm hover:md:bg-green-700"
+                          >
+                            <FaCheck />
+                            <span>Aprobar</span>
+                          </button>
+                          <button
+                            onClick={() => deleteUpload(upload.id, upload.image_url)}
+                            className="bg-red-600/90 active:bg-red-700 text-white py-2 px-3 
+                            rounded-lg transition-colors duration-200 flex items-center justify-center gap-2
+                            shadow-lg active:scale-95 border border-red-500/20
+                            text-sm hover:md:bg-red-700"
+                          >
+                            <FaTrash />
+                            <span>Eliminar</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="settings" className="p-2">
+              <CarouselSettings />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </main>
+  );
+};
+
+export default AdminPanel;
+--------------------------------------------------------------------------------
+
+### Archivo: src\app\admin\login\page.jsx ###
+# Client Component
+--------------------------------------------------------------------------------
+"use client"
+import LoginForm from '@/app/components/LoginForm'; 
+const AdminLogin = () => {
+  return (
+    <main className="min-h-screen text-gray-100 flex flex-col items-center justify-center p-4">
+      <h1 className="text-3xl font-bold mb-8 text-center">Admin</h1>
+      <LoginForm />
+    </main>
+  );
+}
+
+export default AdminLogin
+--------------------------------------------------------------------------------
+
+
+================================================================================
+RESUMEN DEL PROYECTO NEXT.JS 14
+================================================================================
+
+Total de archivos: 26
+Pages: 0
+Layouts: 0
+Components: 15
+API Routes: 0
+Hooks: 1
+Server Components: 14
+Client Components: 12

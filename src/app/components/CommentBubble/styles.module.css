@@ -1,0 +1,128 @@
+.commentBubble {
+    position: relative;
+    width: clamp(16rem, 20vw, 32rem);
+    margin: clamp(0.5rem, 1vh, 2rem) 0;
+    z-index: 50;
+}
+
+.floating {
+    animation: float 6s ease-in-out infinite;
+}
+
+.bubbleContent {
+    position: relative;
+    padding: clamp(0.75rem, 1.5vw, 2rem);
+    border-radius: clamp(1rem, 2vw, 2rem);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    transition: all 0.4s ease;
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.03) 100%
+    );
+    backdrop-filter: blur(12px);
+    box-shadow: 
+        0 clamp(2px, 0.5vw, 8px) clamp(12px, 2vw, 24px) rgba(0, 0, 0, 0.2),
+        0 0 clamp(8px, 1vw, 16px) rgba(0, 0, 0, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.commentText {
+    position: relative;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: clamp(1rem, 2vw, 2.2rem);
+    font-weight: 500;
+    line-height: 1.75;
+    text-shadow: 0 clamp(1px, 0.2vw, 4px) clamp(2px, 0.4vw, 8px) rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease-in-out;
+}
+
+/* Solo mantenemos breakpoints básicos para ajustes específicos */
+@media (max-width: 1023px) {
+    .commentBubble {
+        margin: -1rem auto 1rem;
+        width: clamp(16rem, 85vw, 22rem);
+    }
+}
+
+@media (min-width: 1024px) {
+    .commentBubble {
+        margin: -2rem 0 2rem;
+        width: clamp(22rem, 23vw, 28rem);
+    }
+}
+
+@media (min-width: 1920px) {
+    .commentBubble {
+        width: clamp(24rem, 27vw, 33rem);
+        margin: -2rem 0 2rem;
+    }
+}
+
+/* Mantenemos todas las animaciones originales */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.glow {
+    animation: glowPulse 1s ease-in-out;
+}
+
+@keyframes glowPulse {
+    0% {
+        box-shadow: 
+            0 4px 24px -1px rgba(0, 0, 0, 0.2),
+            0 0 16px -2px rgba(0, 0, 0, 0.1),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+    50% {
+        box-shadow: 
+            0 4px 24px -1px rgba(255, 255, 255, 0.3),
+            0 0 30px -2px rgba(255, 255, 255, 0.2),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    100% {
+        box-shadow: 
+            0 4px 24px -1px rgba(0, 0, 0, 0.2),
+            0 0 16px -2px rgba(0, 0, 0, 0.1),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+}
+
+.fadeIn {
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+.fadeOut {
+    animation: fadeOut 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
